@@ -115,7 +115,7 @@ function csv(){const rows=[["시간","이름/모둠","학급/반","음식물","�
 $("run").onclick=runTest;
 $("save").onclick=async()=>{
  if(!current){$("status").textContent="먼저 시약을 넣고 결과를 관찰해 주세요.";return;}
- const endpoint="https://script.google.com/a/macros/gnu.ac.kr/s/AKfycbw16ojvQ_GRNFEnxBSMVFJdfHmemHVUEda8X8OnRDCtKby91Wi29_HyKmGs3P4kN9pxHA/exec";
+ const endpoint="https://script.google.com/a/macros/gnu.ac.kr/s/AKfycbzZBXbrfYX8hGHdmNcfdknsA4E_G8B42qrajNUP5i4gaqfMBfXSN71qWkNw2JiTzodJzw/exec";
  history.unshift(current);renderHistory();
  if(endpoint.startsWith("https://script.google.com/")||endpoint.startsWith("https://script.googleusercontent.com/")){
    $("save").disabled=true;$("status").textContent="제출 요청 중…";
