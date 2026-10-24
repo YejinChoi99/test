@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>음식물 영양소 검출 실험실</title>
+<style>
+:root{--green:#167653;--mint:#eaf7f0;--ink:#172b24;--muted:#62736c;--line:#d9e5de;--paper:#fff;--bg:#f5f8f6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+header{background:linear-gradient(120deg,#145d45,#21966b);color:white;padding:30px 18px}
+header .wrap,main{max-width:960px;margin:auto}h1{margin:0 0 8px;font-size:clamp(1.5rem,4vw,2.2rem)}header p{margin:0;opacity:.92}
+main{padding:20px 14px 40px}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 5px 18px #153c2a0a}
+h2{font-size:1.15rem;margin:0 0 12px}.muted{color:var(--muted);font-size:.92rem}.foods{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:9px}
+.food{border:1px solid var(--line);background:white;border-radius:12px;padding:12px 6px;cursor:pointer;font:inherit}.food .emoji{font-size:1.8rem;display:block}.food.selected{border:2px solid var(--green);background:var(--mint)}
+select,input,textarea{width:100%;border:1px solid #bdcec4;border-radius:10px;padding:11px;font:inherit;background:white;color:var(--ink)}
+label{display:block;font-weight:650;margin:12px 0 6px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+button.primary{background:var(--green);color:white;border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
+button.secondary{background:white;color:var(--green);border:1px solid var(--green);border-radius:11px;padding:10px 14px;font:inherit;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
+.result{display:none;margin-top:14px;padding:14px;border-radius:12px;background:var(--mint);border:1px solid #b9dfcb}.result.show{display:block}.color-chip{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle;margin-right:6px;border:1px solid #aaa}
+table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border-bottom:1px solid var(--line);text-align:left;padding:9px 7px}th{background:#f3f8f5}
+.status{margin-top:12px;font-size:.92rem}.note{font-size:.88rem;color:var(--muted)}footer{text-align:center;padding:10px 16px 30px;color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>🧪 음식물 영양소 검출 실험실</h1><p>음식물을 고르고 시약 반응을 관찰한 뒤, 실험 결과를 기록해 보세요.</p></div></header>
+<main>
+<section class="card">
+<h2>1. 실험자 정보 (선택)</h2>
+<div class="grid">
+<div><label for="student">이름 또는 모둠명</label><input id="student" maxlength="60" placeholder="예: 2모둠 (개인정보 대신 별칭 권장)"></div>
+<div><label for="className">학급 / 반</label><input id="className" maxlength="40" placeholder="예: 2학년 3반"></div>
+</div>
+<p class="note">학교에서 공유할 경우 실명 대신 모둠명이나 별칭을 사용하는 것을 권장합니다.</p>
+</section>
+<section class="card">
+<h2>2. 검사할 음식물을 선택하세요</h2>
+<div class="foods" id="foods"></div>
+</section>
+<section class="card">
+<h2>3. 검출 시약을 선택하세요</h2>
+<div class="grid">
+<div><label for="test">검출 실험</label><select id="test">
+<option value="iodine">아이오딘 용액 — 녹말</option>
+<option value="benedict">베네딕트 용액 + 가열 — 환원당</option>
+<option value="biuret">뷰렛 용액 — 단백질</option>
+<option value="sudan">수단 III 용액 — 지방</option>
+</select></div>
+<div><label for="prediction">실험 전 예상</label><select id="prediction"><option value="">선택하세요</option><option>검출될 것이다</option><option>검출되지 않을 것이다</option><option>잘 모르겠다</option></select></div>
+</div>
+<div class="actions"><button class="primary" id="run">시약 넣기 및 결과 관찰</button></div>
+<div class="result" id="result" aria-live="polite"></div>
+</section>
+<section class="card">
+<h2>4. 결과 기록 및 제출</h2>
+<label for="memo">관찰 메모 (선택)</label><textarea id="memo" rows="3" maxlength="500" placeholder="색 변화, 침전 생성 여부, 예상과 결과의 차이 등을 적어 보세요."></textarea>
+<div class="actions">
+<button class="primary" id="save">결과를 스프레드시트에 제출</button>
+<button class="secondary" id="download">내 기록 CSV로 저장</button>
+<button class="secondary" id="reset">새 실험 시작</button>
+</div>
+<div class="status" id="status" role="status"></div>
+<p class="note">시트 제출 기능을 사용하려면 선생님/관리자가 아래 안내대로 Google Apps Script 주소를 설정해야 합니다. 연결 전에도 CSV 저장은 가능합니다.</p>
+</section>
+<section class="card">
+<h2>내 실험 기록</h2>
+<div style="overflow-x:auto"><table><thead><tr><th>음식물</th><th>검출 대상</th><th>관찰 결과</th><th>예상</th></tr></thead><tbody id="history"><tr><td colspan="4" class="muted">아직 기록이 없습니다.</td></tr></tbody></table></div>
+</section>
+<section class="card">
+<h2>검출 반응 참고</h2>
+<table><thead><tr><th>영양소</th><th>시약</th><th>양성 반응(대표 예)</th></tr></thead><tbody>
+<tr><td>녹말</td><td>아이오딘 용액</td><td>청람색</td></tr>
+<tr><td>환원당</td><td>베네딕트 용액 + 가열</td><td>녹색·노란색·주황색·적갈색 침전</td></tr>
+<tr><td>단백질</td><td>뷰렛 용액</td><td>보라색</td></tr>
+<tr><td>지방</td><td>수단 III 용액</td><td>지방이 붉게 염색됨</td></tr>
+</tbody></table>
+<p class="note">교육용 가상 실험입니다. 음식물의 실제 조성·농도와 실험 방법에 따라 결과가 달라질 수 있습니다. 베네딕트 반응은 포도당뿐 아니라 다른 환원당에도 나타날 수 있습니다. 실제 가열 실험은 교사의 지도와 보호구 아래 진행하세요.</p>
+</section>
+</main>
+<footer>음식물 영양소 검출 실험 시뮬레이션 · 교육용</footer>
+<script>
+const foods=[
+{name:"밥",emoji:"🍚",starch:true,sugar:false,protein:false,fat:false},
+{name:"식빵",emoji:"🍞",starch:true,sugar:false,protein:true,fat:true},
+{name:"감자",emoji:"🥔",starch:true,sugar:false,protein:false,fat:false},
+{name:"달걀흰자",emoji:"🥚",starch:false,sugar:false,protein:true,fat:false},
+{name:"우유",emoji:"🥛",starch:false,sugar:true,protein:true,fat:true},
+{name:"식용유",emoji:"🫒",starch:false,sugar:false,protein:false,fat:true},
+{name:"포도 주스",emoji:"🍇",starch:false,sugar:true,protein:false,fat:false},
+{name:"두부",emoji:"🧈",starch:false,sugar:false,protein:true,fat:true}
+];
+const tests={
+iodine:{name:"아이오딘 용액",nutrient:"녹말",key:"starch",pos:"청람색",neg:"황갈색",color:"#233caa",desc:"녹말이 있으면 청람색으로 변합니다."},
+benedict:{name:"베네딕트 용액 + 가열",nutrient:"환원당",key:"sugar",pos:"주황색 또는 적갈색 침전",neg:"파란색 유지",color:"#b84c22",desc:"환원당이 있으면 가열 후 색 변화와 침전이 나타날 수 있습니다."},
+biuret:{name:"뷰렛 용액",nutrient:"단백질",key:"protein",pos:"보라색",neg:"파란색 유지",color:"#8038a7",desc:"단백질이 있으면 보라색으로 변합니다."},
+sudan:{name:"수단 III 용액",nutrient:"지방",key:"fat",pos:"붉은색으로 염색",neg:"뚜렷한 붉은색 지방층 없음",color:"#d92d36",desc:"지방이 있으면 붉은색으로 염색됩니다."}
+};
+let selected=0, current=null, history=[];
+const $=id=>document.getElementById(id);
+function renderFoods(){ $("foods").innerHTML=foods.map((f,i)=>`<button class="food ${i===selected?'selected':''}" data-i="${i}"><span class="emoji">${f.emoji}</span>${f.name}</button>`).join("");document.querySelectorAll(".food").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;renderFoods();$("result").classList.remove("show");current=null;});}
+function runTest(){
+ const food=foods[selected], t=tests[$("test").value], positive=!!food[t.key];
+ let observation=positive?t.pos:t.neg;
+ if($("test").value==="benedict"&&positive) observation="주황색 또는 적갈색 침전";
+ current={timestamp:new Date().toISOString(),student:$("student").value.trim(),className:$("className").value.trim(),food:food.name,test:t.name,nutrient:t.nutrient,positive,observation,prediction:$("prediction").value,memo:$("memo").value.trim()};
+ $("result").innerHTML=`<strong>관찰 결과: <span class="color-chip" style="background:${positive?t.color:($("test").value==="iodine"?"#a87527":$("test").value==="sudan"?"#e8e2d5":"#2789cf")}"></span>${observation}</strong><p>${food.name}에서 ${t.nutrient} ${positive?"검출 양성":"검출 음성"}으로 예상되는 가상 결과입니다.</p><p class="muted">${t.desc} 실제 시료에서는 성분과 농도에 따라 결과가 달라질 수 있습니다.</p>`;
+ $("result").classList.add("show");$("status").textContent="결과를 확인한 뒤 기록을 제출하거나 CSV로 저장하세요.";
+}
+function renderHistory(){if(!history.length){$("history").innerHTML='<tr><td colspan="4" class="muted">아직 기록이 없습니다.</td></tr>';return;}
+ $("history").innerHTML=history.map(r=>`<tr><td>${esc(r.food)}</td><td>${esc(r.nutrient)}</td><td>${esc(r.observation)}</td><td>${esc(r.prediction||"미입력")}</td></tr>`).join("");}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function csv(){const rows=[["시간","이름/모둠","학급/반","음식물","시약","검출 대상","양성 여부","관찰 결과","실험 전 예상","관찰 메모"],...history.map(r=>[r.timestamp,r.student,r.className,r.food,r.test,r.nutrient,r.positive?"양성":"음성",r.observation,r.prediction,r.memo])];
+ const content="\ufeff"+rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8;"}));a.download="음식물_영양소_실험기록.csv";a.click();URL.revokeObjectURL(a.href);}
+$("run").onclick=runTest;
+$("save").onclick=async()=>{
+ if(!current){$("status").textContent="먼저 시약을 넣고 결과를 관찰해 주세요.";return;}
+ const endpoint="PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+ history.unshift(current);renderHistory();
+ if(endpoint.startsWith("https://script.google.com/")||endpoint.startsWith("https://script.googleusercontent.com/")){
+   $("save").disabled=true;$("status").textContent="제출 요청 중…";
+   try{await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(current)});$("status").textContent="제출 요청을 보냈습니다. Google 스프레드시트에서 행이 추가됐는지 확인하세요.";}
+   catch(e){$("status").textContent="전송에 실패했습니다. 연결 주소와 배포 권한을 확인한 뒤 다시 시도하세요.";}
+   finally{$("save").disabled=false;}
+ }else{$("status").textContent="아직 스프레드시트 연결 주소가 설정되지 않았습니다. 기록은 이 페이지 안에 추가됐어요. CSV로 저장하거나 관리자에게 연결 설정을 요청하세요.";}
+ current=null;renderHistory();
+};
+$("download").onclick=()=>{if(!history.length){$("status").textContent="먼저 실험 결과를 기록해 주세요.";return;}csv();};
+$("reset").onclick=()=>{$("result").classList.remove("show");$("memo").value="";$("prediction").value="";current=null;$("status").textContent="새 실험을 시작할 수 있습니다.";};
+renderFoods();
+</script>
+</body></html>
